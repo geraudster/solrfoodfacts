@@ -1,0 +1,41 @@
+#+TITLE:     SolR, dis-moi ce qu'il y a dans mon assiette
+#+AUTHOR:    Géraud Dugé de Bernonville
+#+EMAIL:     geraud.dugedebernonville@zenika.com
+#+DATE:      09/05/2017
+
+* Contexte
+
+git clone https://github.com/lucidworks/banana.git /d/apps/banana
+BANANA_HOME=/d/apps/banana
+
+docker run --name my_solr -d -p 8983:8983 -v %BANANA_HOME%\src:/opt/solr/server/solr-webapp/webapp/banana -t solr
+
+docker run --name my_solr -d -p 8983:8983 -v $BANANA_HOME/src:/opt/solr/server/solr-webapp/webapp/banana -t solr
+
+Créer un core :
+
+docker exec -it --user=solr my_solr bin/solr create_core -c gettingstarted
+
+Importer le jeu de donnée :
+
+docker cp %CD%\data\sample-fr.openfoodfacts.org.products.csv my_solr:/opt/solr/sample-fr.openfoodfacts.org.products.csv
+
+docker cp $PWD/data/sample-fr.openfoodfacts.org.products.csv my_solr:/opt/solr/sample-fr.openfoodfacts.org.products.csv
+docker exec -it --user=solr my_solr bin/post -c gettingstarted  -params "separator=%09&keepEmpty=true&header=true&escape=%5c" sample-fr.openfoodfacts.org.products.csv
+
+curl -X POST -H 'Content-type:application/json' --data-binary '{
+  "add-dynamic-field":{
+     "name":"*_100g",
+     "type":"float",
+     "stored":true,
+     "indexed":true}
+}' http://localhost:8983/solr/gettingstarted/schema
+
+
+Supprimer une collection:
+docker exec -it --user=solr my_solr bin/solr delete -c gettingstarted
+
+Hue:
+docker run -it -p 8888:8888 gethue/hue:latest bash
+
+Ou download : ???
